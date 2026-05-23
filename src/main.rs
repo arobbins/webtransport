@@ -14,8 +14,11 @@ use wtransport::ServerConfig;
 use wtransport::datagram::Datagram;
 use wtransport::tls::Sha256Digest;
 
+const TICKER_INTERVAL: u64 = 3;
+const WT_PORT: u16 = 4433;
+
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ClientMessage {
     x_pos: u64,
 }
@@ -125,7 +128,7 @@ fn get_client_message(datagram: &[u8]) -> Result<ClientMessage> {
     Ok(serde_json::from_str(message)?)
 }
 
-fn build_server_message(connection: &Connection, client_message: &ClientMessage) -> ServerMessage {
+fn get_server_message(connection: &Connection, client_message: &ClientMessage) -> ServerMessage {
     ServerMessage {
         connection_id: connection.connection_id,
         connected_on: connection.connected_on,
@@ -154,7 +157,7 @@ async fn handle_datagram(
 
     let client_message = get_client_message(&datagram)?;
     let connection = get_connection(connection_list, connection_id).await?;
-    let server_message = build_server_message(&connection, &client_message);
+    let server_message = get_server_message(&connection, &client_message);
     let transmitters = create_transmitters_list(connection_list, connection_id).await;
 
     broadcast_to_all(transmitters, server_message).await;
@@ -206,7 +209,7 @@ async fn run_connection(
 fn spawn_ticker(connection_list: ConnectionList) {
     tokio::spawn({
         async move {
-            let mut interval = interval(Duration::from_secs(3));
+            let mut interval = interval(Duration::from_secs(TICKER_INTERVAL));
             loop {
                 interval.tick().await;
                 let map = connection_list.lock().await;
@@ -238,7 +241,7 @@ fn create_config() -> Result<(Sha256Digest, ServerConfig)> {
     let cert_hash = identity.certificate_chain().as_slice()[0].hash();
 
     let config = ServerConfig::builder()
-        .with_bind_default(4433)
+        .with_bind_default(WT_PORT)
         .with_identity(identity)
         .build();
 
