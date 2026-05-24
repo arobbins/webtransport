@@ -1,6 +1,6 @@
 # ⚡️ Kinesis
 
-> "I sense strong magic within this place." - Sorceress, Diablo 2
+> I sense strong magic within this place. - Sorceress, Diablo 2
 
 An ultra-fast WebTransport server, built in Rust.
 
