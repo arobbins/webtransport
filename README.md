@@ -15,7 +15,7 @@ Three things to customize per project:
 
 - **`ClientMessage`** — the shape of data your frontend sends
 - **`ServerMessage`** — the shape of data Kinesis sends back
-- **`build_server_message`** — maps a received message into a broadcast
+- **`Connection`** — the state you want saved for each connection
 
 Everything else — connection lifecycle, broadcasting, config — is handled for you.
 
